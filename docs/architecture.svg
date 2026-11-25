@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1120 470" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="13">
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#7e8db3"/></marker>
+    <marker id="r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#ff4d6d"/></marker>
+  </defs>
+  <rect width="1120" height="470" rx="12" fill="#0b0f1a"/>
+  <g fill="#121a2b" stroke="#233150" stroke-width="2">
+    <rect x="20"  y="70"  width="130" height="76" rx="10"/>
+    <rect x="190" y="70"  width="150" height="76" rx="10" stroke="#a78bfa"/>
+    <rect x="380" y="70"  width="150" height="76" rx="10" stroke="#ff8a3d"/>
+    <rect x="570" y="70"  width="150" height="76" rx="10"/>
+    <rect x="760" y="70"  width="150" height="76" rx="10" stroke="#4ade80"/>
+    <rect x="570" y="230" width="150" height="76" rx="10"/>
+    <rect x="760" y="230" width="150" height="76" rx="10"/>
+    <rect x="950" y="150" width="150" height="76" rx="10"/>
+    <rect x="190" y="230" width="150" height="76" rx="10" stroke="#ff4d6d"/>
+    <rect x="380" y="350" width="340" height="86" rx="10" stroke="#fbbf24"/>
+  </g>
+  <g fill="#d6e2ff" text-anchor="middle">
+    <text x="85"  y="102" font-weight="700">Provider</text><text x="85"  y="122" fill="#7e8db3">Stripe / Shopify</text>
+    <text x="265" y="96"  font-weight="700">FastAPI edge</text><text x="265" y="114" fill="#7e8db3">verify raw bytes</text><text x="265" y="130" fill="#7e8db3">rate limit, 5 min window</text>
+    <text x="455" y="96"  font-weight="700">Durable queue</text><text x="455" y="114" fill="#7e8db3">RabbitMQ or Redis</text><text x="455" y="130" fill="#7e8db3">confirm, then 200</text>
+    <text x="645" y="96"  font-weight="700">Ingest worker</text><text x="645" y="114" fill="#7e8db3">dedup, quarantine</text><text x="645" y="130" fill="#7e8db3">ack after commit</text>
+    <text x="835" y="96"  font-weight="700">Postgres</text><text x="835" y="114" fill="#7e8db3">event + delivery rows</text><text x="835" y="130" fill="#7e8db3">one transaction</text>
+    <text x="645" y="256" font-weight="700">Dispatcher</text><text x="645" y="274" fill="#7e8db3">due deliveries</text><text x="645" y="290" fill="#7e8db3">recovers dead workers</text>
+    <text x="835" y="256" font-weight="700">Celery workers</text><text x="835" y="274" fill="#7e8db3">retry + jitter, breaker</text><text x="835" y="290" fill="#7e8db3">per-key ordering</text>
+    <text x="1025" y="176" font-weight="700">Consumer</text><text x="1025" y="194" fill="#7e8db3">stable event id,</text><text x="1025" y="210" fill="#7e8db3">attempt number</text>
+    <text x="265" y="256" font-weight="700" fill="#ff4d6d">401 / 404 / 429</text><text x="265" y="274" fill="#7e8db3">bad signature: nothing</text><text x="265" y="290" fill="#7e8db3">is stored</text>
+    <text x="550" y="378" font-weight="700" fill="#fbbf24">Operate</text>
+    <text x="550" y="398" fill="#7e8db3">admin: replay, skip, correct, CSV, audit log</text>
+    <text x="550" y="416" fill="#7e8db3">/metrics, alerts (dead, queue age, silent source)</text>
+  </g>
+  <g stroke="#7e8db3" stroke-width="2" fill="none" marker-end="url(#a)">
+    <path d="M150 108H190"/><path d="M340 108H380"/><path d="M530 108H570"/><path d="M720 108H760"/>
+    <path d="M835 146V230H910" /><path d="M720 268H760"/><path d="M910 268H1025V226"/>
+    <path d="M835 306V360H720" stroke-dasharray="4 4"/>
+  </g>
+  <path d="M265 146V230" stroke="#ff4d6d" stroke-width="2" fill="none" marker-end="url(#r)"/>
+  <text x="560" y="40" fill="#7e8db3" text-anchor="middle">Edge says 200 only after the queue confirms durability; 503 if it cannot. The database is the source of truth for deliveries.</text>
+  <path d="M835 230V146" stroke="#7e8db3" stroke-width="2" fill="none" stroke-dasharray="3 4"/>
+  <text x="852" y="192" fill="#7e8db3" font-size="11">due rows</text>
+</svg>

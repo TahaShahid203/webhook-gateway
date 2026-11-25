@@ -1,0 +1,9 @@
+# Demo-only override: lets the playground's "crash the queue" button run a real `kill -9` on a broker container.
+# It mounts the Docker socket into the web container, which is fine on a local demo machine and must never be
+# exposed publicly. The test stacks do not use this file.
+services:
+  web:
+    environment:
+      PLAYGROUND_CHAOS: "1"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock

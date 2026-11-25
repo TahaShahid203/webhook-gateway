@@ -1,0 +1,18 @@
+{% extends "admin/base_site.html" %}
+{% block content %}
+<h1>Replay {{ count }} deliver{{ count|pluralize:"y,ies" }}?</h1>
+<p>This is a dry run: nothing has been sent yet.</p>
+<ul>
+  <li><b>{{ count }}</b> finished deliveries selected ({{ skipped }} not replayable and left out).</li>
+  <li>They will be re-sent at <b>{{ rate }}/second</b>, so this takes about <b>{{ seconds }}s</b>.</li>
+  <li>Each replay keeps the SAME event id, carries <code>X-Gateway-Replayed: true</code>, and is recorded in the audit log as <b>{{ actor }}</b>.</li>
+</ul>
+<form method="post">{% csrf_token %}
+  {% for id in ids %}<input type="hidden" name="_selected_action" value="{{ id }}">{% endfor %}
+  <input type="hidden" name="action" value="replay_selected">
+  <input type="hidden" name="confirm" value="yes">
+  <label>Rate per second <input type="number" step="0.5" min="0.5" name="rate" value="{{ rate }}"></label>
+  <input type="submit" class="default" value="Yes, replay them">
+  <a href="{{ back }}" class="button">Cancel</a>
+</form>
+{% endblock %}

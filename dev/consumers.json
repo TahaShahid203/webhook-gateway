@@ -1,0 +1,127 @@
+{
+ "consumers": [
+  {
+   "name": "c-flaky",
+   "url": "http://fake-consumer:9000/flaky",
+   "timeout": 5
+  },
+  {
+   "name": "c-reject",
+   "url": "http://fake-consumer:9000/reject",
+   "timeout": 5
+  },
+  {
+   "name": "c-dead",
+   "url": "http://fake-consumer:9000/dead",
+   "timeout": 5
+  },
+  {
+   "name": "c-slow",
+   "url": "http://fake-consumer:9000/slow",
+   "timeout": 3,
+   "max_in_flight": 4
+  },
+  {
+   "name": "c-healthy",
+   "url": "http://fake-consumer:9000/healthy",
+   "timeout": 5
+  },
+  {
+   "name": "c-crash",
+   "url": "http://fake-consumer:9000/crash",
+   "timeout": 5
+  },
+  {
+   "name": "c-order",
+   "url": "http://fake-consumer:9000/order",
+   "timeout": 5
+  },
+  {
+   "name": "c-breaker",
+   "url": "http://fake-consumer:9000/breaker",
+   "timeout": 5
+  },
+  {
+   "name": "c-demo",
+   "url": "http://fake-consumer:9000/demo",
+   "timeout": 5
+  },
+  {
+   "name": "c-replay",
+   "url": "http://fake-consumer:9000/replay",
+   "timeout": 5
+  },
+  {
+   "name": "c-grace",
+   "url": "http://fake-consumer:9000/grace",
+   "timeout": 10
+  },
+  {
+   "name": "c-shop",
+   "url": "http://fake-consumer:9000/shop",
+   "timeout": 5
+  },
+  {
+   "name": "c-load",
+   "url": "http://fake-consumer:9000/load",
+   "timeout": 5,
+   "max_in_flight": 16
+  }
+ ],
+ "subscriptions": [
+  {
+   "source": "s-flaky",
+   "consumer": "c-flaky"
+  },
+  {
+   "source": "s-reject",
+   "consumer": "c-reject"
+  },
+  {
+   "source": "s-dead",
+   "consumer": "c-dead"
+  },
+  {
+   "source": "s-iso",
+   "consumer": "c-slow"
+  },
+  {
+   "source": "s-iso",
+   "consumer": "c-healthy"
+  },
+  {
+   "source": "s-crash",
+   "consumer": "c-crash"
+  },
+  {
+   "source": "s-order",
+   "consumer": "c-order",
+   "ordered": true,
+   "ordering_key": "order"
+  },
+  {
+   "source": "s-breaker",
+   "consumer": "c-breaker"
+  },
+  {
+   "source": "stripe-a",
+   "consumer": "c-demo"
+  },
+  {
+   "source": "s-replay",
+   "consumer": "c-replay"
+  },
+  {
+   "source": "s-grace",
+   "consumer": "c-grace"
+  },
+  {
+   "source": "shop-a",
+   "consumer": "c-shop"
+  },
+  {
+   "source": "s-load",
+   "consumer": "c-load"
+  }
+ ]
+}

@@ -1,0 +1,75 @@
+{
+ "sources": {
+  "stripe-a": {
+   "scheme": "stripe",
+   "secret": "whsec_dev_stripe",
+   "event_id_json_key": "id"
+  },
+  "shop-a": {
+   "scheme": "shopify",
+   "secret": "shpss_dev_shopify",
+   "event_id_header": "x-shopify-webhook-id",
+   "event_type_header": "x-shopify-topic"
+  },
+  "s-flaky": {
+   "scheme": "stripe",
+   "secret": "whsec_dev_stripe",
+   "event_id_json_key": "id",
+   "event_type_json_key": "type"
+  },
+  "s-reject": {
+   "scheme": "stripe",
+   "secret": "whsec_dev_stripe",
+   "event_id_json_key": "id",
+   "event_type_json_key": "type"
+  },
+  "s-dead": {
+   "scheme": "stripe",
+   "secret": "whsec_dev_stripe",
+   "event_id_json_key": "id",
+   "event_type_json_key": "type"
+  },
+  "s-iso": {
+   "scheme": "stripe",
+   "secret": "whsec_dev_stripe",
+   "event_id_json_key": "id",
+   "event_type_json_key": "type"
+  },
+  "s-crash": {
+   "scheme": "stripe",
+   "secret": "whsec_dev_stripe",
+   "event_id_json_key": "id",
+   "event_type_json_key": "type"
+  },
+  "s-order": {
+   "scheme": "stripe",
+   "secret": "whsec_dev_stripe",
+   "event_id_json_key": "id",
+   "event_type_json_key": "type"
+  },
+  "s-breaker": {
+   "scheme": "stripe",
+   "secret": "whsec_dev_stripe",
+   "event_id_json_key": "id",
+   "event_type_json_key": "type"
+  },
+  "s-replay": {
+   "scheme": "stripe",
+   "secret": "whsec_dev_stripe",
+   "event_id_json_key": "id",
+   "event_type_json_key": "type"
+  },
+  "s-grace": {
+   "scheme": "stripe",
+   "secret": "whsec_dev_stripe",
+   "event_id_json_key": "id",
+   "event_type_json_key": "type"
+  },
+  "s-load": {
+   "scheme": "stripe",
+   "secret": "whsec_dev_stripe",
+   "event_id_json_key": "id",
+   "event_type_json_key": "type"
+  }
+ }
+}

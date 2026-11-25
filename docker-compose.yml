@@ -1,0 +1,173 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: gateway
+      POSTGRES_USER: gateway
+      POSTGRES_PASSWORD: gateway
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gateway"]
+      interval: 2s
+      retries: 20
+
+  broker:
+    image: rabbitmq:3.13-management
+    # The health check must NOT run rabbitmq-diagnostics: it runs as root, and if it fires before the server has created
+    # its Erlang cookie, root's copy of the tool creates /var/lib/rabbitmq/.erlang.cookie owned by root (mode 0400).
+    # The server (user rabbitmq) then cannot read it and exits ("eacces"). Under CPU load, startup is slow enough
+    # for that to happen. A plain TCP probe of the AMQP port touches no Erlang state and tests what we need.
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'exec 3<>/dev/tcp/127.0.0.1/5672'"]
+      interval: 3s
+      retries: 20
+
+  core-test:
+    image: python:3.12-slim
+    working_dir: /app
+    volumes: ["./core:/app"]
+    environment:
+      POSTGRES_HOST: db
+    depends_on:
+      db: {condition: service_healthy}
+    profiles: ["test"]
+    command: sh -c "pip -q install -r requirements.txt -r requirements-dev.txt && pytest -q"
+
+  redis:
+    image: redis:7
+    # the durability knob the kill -9 comparison turns: always (fsync every write) | everysec | no
+    command: ["redis-server", "--appendonly", "${REDIS_APPENDONLY:-yes}", "--appendfsync", "${REDIS_APPENDFSYNC:-everysec}"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 2s
+      retries: 20
+
+  # Redis with ALL persistence off (no append-only file, no snapshots): the contrast case for the crash demo.
+  redis-volatile:
+    image: redis:7
+    command: ["redis-server", "--appendonly", "no", "--save", ""]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 2s
+      retries: 20
+
+  migrate:
+    build: ./core
+    working_dir: /app
+    environment: &core-env
+      POSTGRES_HOST: db
+      BROKER_URL: amqp://guest:guest@broker:5672/
+      # tests run the real delivery code with time scaled down (1 = production values)
+      DELIVERY_TIME_SCALE: ${DELIVERY_TIME_SCALE:-1}
+      DELIVERY_MAX_ATTEMPTS: ${DELIVERY_MAX_ATTEMPTS:-14}
+      DELIVERY_STUCK_GRACE: ${DELIVERY_STUCK_GRACE:-30}
+      CONSUMER_SECRET: consumer-secret
+      REDIS_URL: redis://redis:6379/0
+      REDIS_VOLATILE_URL: redis://redis-volatile:6379/0
+      EDGE_SOURCES_FILE: /sources/sources.json
+      PLAYGROUND: ${PLAYGROUND:-1}
+      EDGE_URL: http://edge:8000
+      FAKE_CONSUMER_URL: http://fake-consumer:9000
+      RABBIT_API: http://broker:15672
+      ALERT_WEBHOOK_URL: ${ALERT_WEBHOOK_URL:-}
+      ALERT_DEAD_THRESHOLD: ${ALERT_DEAD_THRESHOLD:-5}
+      ALERT_QUEUE_AGE_SECONDS: ${ALERT_QUEUE_AGE_SECONDS:-300}
+      ALERT_CHECK_EVERY_SECONDS: ${ALERT_CHECK_EVERY_SECONDS:-30}
+      SOURCES_FILE: /dev-config/sources.json
+    volumes: ["./dev:/dev-config:ro", "sources:/sources"]
+    depends_on:
+      db: {condition: service_healthy}
+    command: sh -c "python manage.py migrate --noinput && python manage.py seed_dev"
+
+  ingest:
+    build: ./core
+    environment: *core-env
+    volumes: ["./dev:/dev-config:ro"]
+    depends_on:
+      broker: {condition: service_healthy}
+      migrate: {condition: service_completed_successfully}
+    command: python manage.py run_ingest
+    restart: unless-stopped
+
+  edge:
+    build: ./edge
+    environment:
+      BROKER_URL: amqp://guest:guest@broker:5672/
+      REDIS_URL: redis://redis:6379/0
+      REDIS_VOLATILE_URL: redis://redis-volatile:6379/0
+      DEFAULT_BROKER: ${DEFAULT_BROKER:-rabbitmq}
+      ALLOW_BROKER_OVERRIDE: "1"      # dev/playground: a request may pick its transport with X-Gateway-Broker
+      SOURCES_FILE: /sources/sources.json
+      REJECTION_LOG: /var/log/edge/rejections.log
+    volumes: ["sources:/sources:ro"]
+    depends_on:
+      broker: {condition: service_healthy}
+      redis: {condition: service_healthy}
+      migrate: {condition: service_completed_successfully}
+    ports: ["${EDGE_PORT:-8000}:8000"]
+    restart: unless-stopped
+
+  e2e:
+    build: ./core
+    environment:
+      <<: *core-env
+      EDGE_URL: http://edge:8000
+    volumes: ["./dev:/dev-config:ro"]
+    depends_on: [edge, ingest]
+    profiles: ["test"]
+    command: python e2e/run_e2e.py
+
+  ingest-redis:
+    build: ./core
+    environment: *core-env
+    depends_on:
+      redis: {condition: service_healthy}
+      migrate: {condition: service_completed_successfully}
+    command: python manage.py run_ingest --broker redis
+    restart: unless-stopped
+
+  ingest-redis-volatile:
+    build: ./core
+    environment:
+      <<: *core-env
+      REDIS_URL: redis://redis-volatile:6379/0
+    depends_on:
+      redis-volatile: {condition: service_healthy}
+      migrate: {condition: service_completed_successfully}
+    command: python manage.py run_ingest --broker redis
+    restart: unless-stopped
+
+  worker:
+    build: ./core
+    environment: *core-env
+    depends_on:
+      broker: {condition: service_healthy}
+      migrate: {condition: service_completed_successfully}
+    command: celery -A gateway worker -Q deliver -c 8 -l info
+    restart: unless-stopped
+
+  dispatcher:
+    build: ./core
+    environment: *core-env
+    depends_on:
+      broker: {condition: service_healthy}
+      migrate: {condition: service_completed_successfully}
+    command: python manage.py run_dispatcher
+    restart: unless-stopped
+
+  web:
+    build: ./core
+    environment: *core-env
+    volumes: ["sources:/sources"]
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+    ports: ["${WEB_PORT:-8080}:8080"]
+    command: gunicorn gateway.wsgi:application -b 0.0.0.0:8080 --workers 2
+    restart: unless-stopped
+
+  fake-consumer:
+    build: ./fake_consumer
+    ports: ["${CONSUMER_PORT:-9000}:9000"]
+    restart: unless-stopped
+
+volumes:
+  sources:
